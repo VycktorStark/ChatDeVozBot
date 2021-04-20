@@ -1,2 +1,4 @@
 [CHATDEVOZBOT]
 TOKEN =
+CHANNEL =
+CHATDEVOZ_LOG = /var/log/ChatDeVoz/chatdevoz.log

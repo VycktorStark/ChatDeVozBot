@@ -1,22 +1,16 @@
-import configparser
+from database import voice_started, voice_ended, create_group_table, select_info, select_all, add_group, add_sub, del_sub, del_group
 from datetime import datetime
-import logging.handlers
-import msgs
-import os
-import sqlite3
-import subprocess
-import telebot
-import time
 from telebot import types
+import logging.handlers, subprocess, configparser, logging, telebot, time, msgs, os
 
 config = configparser.ConfigParser()
 config.read('chatdevozbot.conf')
 
 TOKEN = config['CHATDEVOZBOT']['TOKEN']
+Channel = config['CHATDEVOZBOT']['CHANNEL']
+CHATDEVOZ_LOG = config['CHATDEVOZBOT']['CHATDEVOZ_LOG']
 ADMIN = ['creator', 'administrator']
 COMMANDS = ['/iniciar', '/parar']
-db = 'ChatDeVoz'
-table = 'ChatDeVoz'
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -24,97 +18,12 @@ usuario = {}
 
 logger_info = logging.getLogger('InfoLogger')
 logger_info.setLevel(logging.DEBUG)
-handler_info = logging.handlers.TimedRotatingFileHandler(
-    '/var/log/ChatDeVoz/chatdevoz.log', when='midnight', interval=1, backupCount=7, encoding='utf-8'
-)
+handler_info = logging.handlers.TimedRotatingFileHandler(CHATDEVOZ_LOG, when='midnight', interval=1, backupCount=7, encoding='utf-8')
 logger_info.addHandler(handler_info)
 
 markup_btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
 markup_btn.row('/Participar')
 markup_clean = types.ReplyKeyboardRemove(selective=False)
-
-def voice_started(groupid, messageid):
-    conn = sqlite3.connect(db)
-    cursor = conn.cursor()
-    aux = ('''INSERT INTO {} (groupid, messageid)
-        VALUES ('{}', '{}')''').format('Chats_de_Voz', groupid, messageid)
-    cursor.execute(aux)
-    conn.commit()
-    conn.close()
-
-def voice_ended(groupid):
-    conn = sqlite3.connect(db)
-    cursor = conn.cursor()
-    aux = ('''DELETE FROM {}
-        WHERE id = {}''').format('Chats_de_Voz', groupid)
-    cursor.execute(aux)
-    conn.commit()
-    conn.close()
-
-
-def create_group_table(groupid):
-    conn = sqlite3.connect(db)
-    cursor = conn.cursor()
-    aux = ('''CREATE TABLE {} (
-        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        userid TEXT);
-    ''').format(groupid)
-    cursor.execute(aux)
-
-def select_info(table, col, arg):
-    conn = sqlite3.connect(db)
-    cursor = conn.cursor()
-    aux = ('''SELECT * FROM {} WHERE
-       {} ="{}"''').format(table, col, arg)
-    cursor.execute(aux)
-    data = cursor.fetchone()
-    conn.close()
-    return data
-
-def select_all(table):
-    conn = sqlite3.connect(db)
-    cursor = conn.cursor()
-    aux = ('''SELECT userid FROM {}''').format(table)
-    cursor.execute(aux)
-    data = cursor.fetchall()
-    conn.close()
-    return data
-
-def add_group(groupid, adminid, pinid):
-    conn = sqlite3.connect(db)
-    cursor = conn.cursor()
-    aux = ('''INSERT INTO {} (groupid, adminid, pinid)
-        VALUES ('{}', '{}', '{}')''').format(table, groupid, adminid, pinid)
-    cursor.execute(aux)
-    conn.commit()
-    conn.close()
-
-def add_sub(groupid, userid):
-    conn = sqlite3.connect(db)
-    cursor = conn.cursor()
-    aux = ('''INSERT INTO {} (userid)
-        VALUES ('{}')''').format((groupid), userid)
-    cursor.execute(aux)
-    conn.commit()
-    conn.close()
-
-def del_sub(groupid, userid):
-    conn = sqlite3.connect(db)
-    cursor = conn.cursor()
-    aux = ('''DELETE FROM {}
-        WHERE userid = {}''').format((groupid), userid)
-    cursor.execute(aux)
-    conn.commit()
-    conn.close()
-
-def del_group(table, groupid):
-    conn = sqlite3.connect(db)
-    cursor = conn.cursor()
-    aux = ('''DELETE FROM {}
-        WHERE groupid = {}''').format(table, groupid)
-    cursor.execute(aux)
-    conn.commit()
-    conn.close()
 
 def log_text(message):
     logger_info.info(
@@ -188,7 +97,7 @@ def bot_stop(message):
     if msg:
         try:
             voice_ended(msg[0])
-            bot.delete_message('@Chats_De_Voz', msg[2])
+            bot.delete_message(Channel, msg[2])
         except:
             pass
     bot.delete_message(message.chat.id, message.message_id)
@@ -223,7 +132,7 @@ def bot_start(message):
         msg = bot.send_message(message.from_user.id, msgs.voice_start, parse_mode='HTML')
         usuario[message.from_user.id] = message.text.replace('/start ', '')
     elif message.chat.id > 0:
-        bot.send_document(message.from_user.id, 'CgACAgEAAxkBAAPTYEexcA2G2cn6g2CdZS4MOVvm4ScAAhgBAAJhYUFGN48mu1WuJXMeBA')
+        #bot.send_document(message.from_user.id, 'CgACAgEAAxkBAAPTYEexcA2G2cn6g2CdZS4MOVvm4ScAAhgBAAJhYUFGN48mu1WuJXMeBA')
         bot.send_message(message.from_user.id, msgs.start_user, parse_mode='HTML', disable_web_page_preview=True)
 
 @bot.message_handler(commands=['MeAvise'])
@@ -277,7 +186,7 @@ def voice_notify(message):
         pass
 
     if message.chat.username:
-        msg = bot.send_message('@Chats_de_Voz', msgs.voice_started_group.format(message.chat.username), parse_mode='HTML')
+        msg = bot.send_message(Channel, msgs.voice_started_group.format(message.chat.username), parse_mode='HTML')
         voice_started(groupid, msg.message_id)
 
     status = bot.get_chat_member(message.chat.id, message.from_user.id).status
