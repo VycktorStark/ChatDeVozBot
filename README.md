@@ -6,26 +6,27 @@
 
 * [Sobre](#sobre)
 * [Instruções de Uso](#instruções-de-uso)
+* [Configurando o Projeto](Configurando-o-Projeto)
 
 ## Sobre
 
 Este bot tem a função de receber mensagens de voz de usuários para que sejam inseridas em chats de voz ou qualquer outro meio desejado.
 
-## Configurar Projeto
+## Configurando o Projeto
 
 Após clonar/baixar o repositório, instale os pacotes necessários:
 
-`` `
-pip install -r requisitos.txt
-`` `
+```
+pip install -r requirements.txt
+```
 
-Crie um arquivo `chatdevozbot.conf` seguindo` chatdevozbot.conf_sample`.
+Crie um arquivo `chatdevozbot.conf` seguindo o exemplo ` chatdevozbot.conf_sample` que está nesse projeto.
 
 Use o campo `TOKEN` para adicionar sua token de bot gerado por [@BotFather](https://t.me/BotFather)
 
 Use o campo `CHATDEVOZ_LOG` para adiconar seu arquivos de log
 
-Crie as estrutura de tabelas para o banco de dados
+Crie as estrutura de tabelas para o banco de dados da seguinte maneira:
 ```
 CREATE TABLE ChatDeVoz (
         id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
